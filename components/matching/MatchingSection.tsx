@@ -39,7 +39,7 @@ export default function MatchingSection({ type, id }: Props) {
   const linkBase = type === 'engineer' ? '/projects' : '/engineers'
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5 sticky top-6">
+    <div className="bg-white rounded-xl border border-slate-200 p-5 lg:sticky lg:top-6">
       <div className="flex items-center gap-2 mb-4">
         <Sparkles className="w-4 h-4 text-blue-500" />
         <h3 className="font-semibold text-slate-700 text-sm">AIマッチング</h3>

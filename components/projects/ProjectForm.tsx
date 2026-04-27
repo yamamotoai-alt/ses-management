@@ -27,23 +27,90 @@ function SkillInput({ items, onChange, options, label }: {
       <label className="block text-sm font-medium text-slate-700 mb-2">{label}</label>
       <div className="space-y-2">
         {items.map((item, i) => (
-          <div key={i} className="flex gap-2">
+          <div key={i} className="flex gap-2 items-center">
             <select
-              value={item.name}
-              onChange={e => update(i, 'name', e.target.value)}
+              value={options.includes(item.name) ? item.name : 'その他'}
+              onChange={e => update(i, 'name', e.target.value === 'その他' ? 'その他' : e.target.value)}
               className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">選択</option>
               {options.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
+            {item.name === 'その他' && (
+              <input
+                type="text"
+                value={item.name === 'その他' ? '' : item.name}
+                onChange={e => update(i, 'name', e.target.value)}
+                placeholder="具体的に入力"
+                className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            )}
             <input
               type="number"
               value={item.years}
               onChange={e => update(i, 'years', Number(e.target.value))}
               min={0} max={30}
-              className="w-20 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-16 sm:w-20 border border-slate-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <span className="flex items-center text-sm text-slate-500">年以上</span>
+            <span className="flex items-center text-sm text-slate-500 whitespace-nowrap">年以上</span>
+            <button type="button" onClick={() => remove(i)} className="text-slate-400 hover:text-red-500">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+        <button type="button" onClick={add} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <Plus className="w-4 h-4" /> {label}を追加
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function OptionalSkillInput({ items, onChange, options, label }: {
+  items: SkillWithYears[]
+  onChange: (items: SkillWithYears[]) => void
+  options: string[]
+  label: string
+}) {
+  const add = () => onChange([...items, { name: '', years: 1 }])
+  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i))
+  const update = (i: number, field: keyof SkillWithYears, val: string | number) => {
+    const next = [...items]
+    next[i] = { ...next[i], [field]: val }
+    onChange(next)
+  }
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-2">{label}</label>
+      <div className="space-y-2">
+        {items.map((item, i) => (
+          <div key={i} className="flex gap-2 items-center">
+            <select
+              value={options.includes(item.name) ? item.name : 'その他'}
+              onChange={e => update(i, 'name', e.target.value === 'その他' ? 'その他' : e.target.value)}
+              className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">選択</option>
+              {options.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+            {item.name === 'その他' && (
+              <input
+                type="text"
+                value={item.name === 'その他' ? '' : item.name}
+                onChange={e => update(i, 'name', e.target.value)}
+                placeholder="具体的に入力"
+                className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            )}
+            <input
+              type="number"
+              value={item.years}
+              onChange={e => update(i, 'years', Number(e.target.value))}
+              min={0} max={30}
+              className="w-16 sm:w-20 border border-slate-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <span className="flex items-center text-sm text-slate-500 whitespace-nowrap">年以上</span>
             <button type="button" onClick={() => remove(i)} className="text-slate-400 hover:text-red-500">
               <X className="w-4 h-4" />
             </button>
@@ -72,14 +139,23 @@ export default function ProjectForm({ project }: Props) {
     budget_max: project?.budget_max?.toString() ?? '',
     duration: project?.duration ?? '',
     work_style: project?.work_style ?? '',
+    work_location: project?.work_location ?? '',
+    work_hours: project?.work_hours ?? '',
+    interview_count: project?.interview_count ?? '',
+    commercial_flow: project?.commercial_flow ?? '',
     required_experience_years: project?.required_experience_years?.toString() ?? '',
     description: project?.description ?? '',
+    project_content: project?.project_content ?? '',
+    project_notes: project?.project_notes ?? '',
     status: project?.status ?? '募集中',
   })
 
   const [reqLangs, setReqLangs] = useState<SkillWithYears[]>(project?.required_languages ?? [])
   const [reqFrameworks, setReqFrameworks] = useState<SkillWithYears[]>(project?.required_frameworks ?? [])
   const [reqCloud, setReqCloud] = useState<SkillWithYears[]>(project?.required_cloud ?? [])
+  const [optLangs, setOptLangs] = useState<SkillWithYears[]>(project?.optional_languages ?? [])
+  const [optFrameworks, setOptFrameworks] = useState<SkillWithYears[]>(project?.optional_frameworks ?? [])
+  const [optCloud, setOptCloud] = useState<SkillWithYears[]>(project?.optional_cloud ?? [])
 
   const set = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }))
 
@@ -92,7 +168,9 @@ export default function ProjectForm({ project }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: pasteText, type: 'project' }),
       })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
+      if (data.error) throw new Error(data.error)
       if (data.result) {
         const r = data.result
         if (r.name) set('name', r.name)
@@ -100,16 +178,25 @@ export default function ProjectForm({ project }: Props) {
         if (r.budget_max) set('budget_max', r.budget_max.toString())
         if (r.duration) set('duration', r.duration)
         if (r.work_style) set('work_style', r.work_style)
+        if (r.work_location) set('work_location', r.work_location)
+        if (r.work_hours) set('work_hours', r.work_hours)
+        if (r.interview_count) set('interview_count', r.interview_count)
+        if (r.commercial_flow) set('commercial_flow', r.commercial_flow)
         if (r.required_experience_years) set('required_experience_years', r.required_experience_years.toString())
         if (r.description) set('description', r.description)
+        if (r.project_content) set('project_content', r.project_content)
+        if (r.project_notes) set('project_notes', r.project_notes)
         if (r.required_languages?.length) setReqLangs(r.required_languages)
         if (r.required_frameworks?.length) setReqFrameworks(r.required_frameworks)
         if (r.required_cloud?.length) setReqCloud(r.required_cloud)
+        if (r.optional_languages?.length) setOptLangs(r.optional_languages)
+        if (r.optional_frameworks?.length) setOptFrameworks(r.optional_frameworks)
+        if (r.optional_cloud?.length) setOptCloud(r.optional_cloud)
         setPasteText('')
         setShowTextInput(false)
       }
-    } catch {
-      alert('テキストの解析に失敗しました')
+    } catch (e) {
+      alert('テキストの解析に失敗しました: ' + String(e))
     }
     setTextLoading(false)
   }
@@ -125,12 +212,21 @@ export default function ProjectForm({ project }: Props) {
       budget_max: form.budget_max ? Number(form.budget_max) : null,
       duration: form.duration || null,
       work_style: form.work_style || null,
+      work_location: form.work_location || null,
+      work_hours: form.work_hours || null,
+      interview_count: form.interview_count || null,
+      commercial_flow: form.commercial_flow || null,
       required_experience_years: form.required_experience_years ? Number(form.required_experience_years) : null,
       description: form.description || null,
+      project_content: form.project_content || null,
+      project_notes: form.project_notes || null,
       status: form.status,
       required_languages: reqLangs,
       required_frameworks: reqFrameworks,
       required_cloud: reqCloud,
+      optional_languages: optLangs,
+      optional_frameworks: optFrameworks,
+      optional_cloud: optCloud,
     }
 
     let error
@@ -189,10 +285,11 @@ export default function ProjectForm({ project }: Props) {
         )}
       </div>
 
+      {/* 基本情報 */}
       <section>
         <h3 className="text-base font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">基本情報</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="sm:col-span-2">
             <label className={labelClass}>案件名 <span className="text-red-500">*</span></label>
             <input type="text" required value={form.name} onChange={e => set('name', e.target.value)} className={inputClass} />
           </div>
@@ -229,21 +326,63 @@ export default function ProjectForm({ project }: Props) {
             </select>
           </div>
           <div>
+            <label className={labelClass}>勤務場所</label>
+            <input type="text" value={form.work_location} onChange={e => set('work_location', e.target.value)} className={inputClass} placeholder="例: 渋谷、フルリモート" />
+          </div>
+          <div>
+            <label className={labelClass}>勤務時間</label>
+            <input type="text" value={form.work_hours} onChange={e => set('work_hours', e.target.value)} className={inputClass} placeholder="例: 9:00〜18:00" />
+          </div>
+          <div>
+            <label className={labelClass}>面談回数</label>
+            <input type="text" value={form.interview_count} onChange={e => set('interview_count', e.target.value)} className={inputClass} placeholder="例: 1回" />
+          </div>
+          <div>
+            <label className={labelClass}>商流</label>
+            <input type="text" value={form.commercial_flow} onChange={e => set('commercial_flow', e.target.value)} className={inputClass} placeholder="例: エンド直、1次受け" />
+          </div>
+          <div>
             <label className={labelClass}>必要経験年数（年以上）</label>
             <input type="number" value={form.required_experience_years} onChange={e => set('required_experience_years', e.target.value)} className={inputClass} min={0} max={30} />
           </div>
         </div>
       </section>
 
+      {/* 必須スキル */}
       <section>
         <h3 className="text-base font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">必須スキル</h3>
         <div className="space-y-6">
           <SkillInput items={reqLangs} onChange={setReqLangs} options={LANGUAGE_OPTIONS} label="必須言語" />
           <SkillInput items={reqFrameworks} onChange={setReqFrameworks} options={FRAMEWORK_OPTIONS} label="必須フレームワーク" />
           <SkillInput items={reqCloud} onChange={setReqCloud} options={CLOUD_OPTIONS} label="クラウド環境" />
+        </div>
+      </section>
+
+      {/* 尚可スキル */}
+      <section>
+        <h3 className="text-base font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">尚可スキル</h3>
+        <div className="space-y-6">
+          <OptionalSkillInput items={optLangs} onChange={setOptLangs} options={LANGUAGE_OPTIONS} label="尚可言語" />
+          <OptionalSkillInput items={optFrameworks} onChange={setOptFrameworks} options={FRAMEWORK_OPTIONS} label="尚可フレームワーク" />
+          <OptionalSkillInput items={optCloud} onChange={setOptCloud} options={CLOUD_OPTIONS} label="尚可クラウド環境" />
+        </div>
+      </section>
+
+      {/* 案件詳細 */}
+      <section>
+        <h3 className="text-base font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">案件詳細</h3>
+        <div className="space-y-4">
           <div>
             <label className={labelClass}>案件概要</label>
-            <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={4} className={inputClass} />
+            <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={3} className={inputClass} placeholder="案件の概要を入力してください" />
+          </div>
+          <div>
+            <label className={labelClass}>案件内容</label>
+            <textarea value={form.project_content} onChange={e => set('project_content', e.target.value)} rows={5} className={inputClass} placeholder="具体的な作業内容・業務詳細を入力してください" />
+          </div>
+          <div>
+            <label className={labelClass}>案件備考</label>
+            <textarea value={form.project_notes} onChange={e => set('project_notes', e.target.value)} rows={3} className={inputClass} placeholder="その他備考事項を入力してください" />
           </div>
         </div>
       </section>

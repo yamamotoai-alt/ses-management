@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
-const { setupDevPlatform } = process.env.NODE_ENV === 'development'
-  ? require('@cloudflare/next-on-pages/next-dev')
-  : { setupDevPlatform: () => {} }
-
-setupDevPlatform().catch(() => {})
+if (process.env.NODE_ENV === 'development') {
+  const { setupDevPlatform } = require('@cloudflare/next-on-pages/next-dev')
+  setupDevPlatform().catch(() => {})
+}
 
 const nextConfig = {
   experimental: {

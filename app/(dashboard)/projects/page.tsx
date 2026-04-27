@@ -1,60 +1,50 @@
+export const runtime = 'edge'
+
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Plus, Search, DollarSign, Clock } from 'lucide-react'
+import { Search, DollarSign, Clock } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
-import { ExportProjectsButton } from '@/components/ui/ExportCsvButton'
 import { Project } from '@/types'
+import ProjectListHeader from '@/components/projects/ProjectListHeader'
 
 interface Props {
-  searchParams: { q?: string; status?: string; work_style?: string }
+  searchParams: Promise<{ q?: string; status?: string; work_style?: string }>
 }
 
 export default async function ProjectsPage({ searchParams }: Props) {
-  const supabase = createClient()
+  const sp = await searchParams
+  const supabase = await createClient()
 
   let query = supabase.from('projects').select('*').order('created_at', { ascending: false })
 
-  if (searchParams.status) query = query.eq('status', searchParams.status)
-  if (searchParams.work_style) query = query.eq('work_style', searchParams.work_style)
-  if (searchParams.q) query = query.ilike('name', `%${searchParams.q}%`)
+  if (sp.status) query = query.eq('status', sp.status)
+  if (sp.work_style) query = query.eq('work_style', sp.work_style)
+  if (sp.q) query = query.ilike('name', `%${sp.q}%`)
 
   const { data: projects } = await query
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800">案件管理</h2>
-          <p className="text-slate-500 text-sm mt-1">{projects?.length ?? 0}件の案件</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ExportProjectsButton projects={(projects ?? []) as Project[]} />
-          <Link
-            href="/projects/new"
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors"
-          >
-            <Plus className="w-4 h-4" /> 新規登録
-          </Link>
-        </div>
-      </div>
+    <div className="p-4 md:p-8">
+      <ProjectListHeader projects={(projects ?? []) as Project[]} count={projects?.length ?? 0} />
 
       <form className="bg-white rounded-xl border border-slate-200 p-4 mb-6 flex flex-wrap gap-3">
-        <div className="flex-1 min-w-48 relative">
+        <div className="flex-1 min-w-0 relative">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             name="q"
-            defaultValue={searchParams.q}
+            defaultValue={sp.q}
             placeholder="案件名で検索..."
             className="w-full border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <select name="status" defaultValue={searchParams.status} className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select name="status" defaultValue={sp.status} className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">ステータス: 全て</option>
           <option value="募集中">募集中</option>
+          <option value="draft">ドラフト</option>
           <option value="終了">終了</option>
         </select>
-        <select name="work_style" defaultValue={searchParams.work_style} className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <select name="work_style" defaultValue={sp.work_style} className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">稼働形態: 全て</option>
           <option value="フルリモート">フルリモート</option>
           <option value="ハイブリッド">ハイブリッド</option>
@@ -79,9 +69,12 @@ export default async function ProjectsPage({ searchParams }: Props) {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <h3 className="font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">{proj.name}</h3>
-                    <Badge variant={proj.status === '募集中' ? 'green' : 'gray'}>{proj.status}</Badge>
+                    {proj.status === 'draft'
+                      ? <span className="px-2 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded font-medium">ドラフト</span>
+                      : <Badge variant={proj.status === '募集中' ? 'green' : 'gray'}>{proj.status}</Badge>
+                    }
                     {proj.work_style && <Badge variant="blue">{proj.work_style}</Badge>}
                   </div>
                   <div className="flex flex-wrap gap-4 text-sm text-slate-500">
@@ -100,7 +93,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
                       <span>{proj.required_experience_years}年以上の経験</span>
                     )}
                   </div>
-                  {proj.required_languages.length > 0 && (
+                  {(proj.required_languages ?? []).length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {proj.required_languages.slice(0, 5).map(l => (
                         <span key={l.name} className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded">

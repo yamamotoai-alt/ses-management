@@ -1,9 +1,7 @@
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { bedrock, CLAUDE_MODEL } from '@/lib/anthropic'
 
 const ENGINEER_PROMPT = `以下のテキストはエンジニアの情報です。次の項目を抽出してJSONで返してください。
 
@@ -29,41 +27,50 @@ const PROJECT_PROMPT = `以下のテキストは開発案件の情報です。�
 - budget_max: 予算上限（円/月の数値、不明なら null）
 - duration: 期間（文字列、例: "3ヶ月〜"、不明なら null）
 - work_style: 稼働形態（"フルリモート"/"ハイブリッド"/"常駐"のいずれか、不明なら null）
+- work_location: 勤務場所（文字列、不明なら null）
+- work_hours: 勤務時間（文字列、不明なら null）
+- interview_count: 面談回数（文字列、不明なら null）
+- commercial_flow: 商流（文字列、不明なら null）
 - required_experience_years: 必要経験年数（数値、不明なら null）
 - description: 案件概要（文字列、テキストの内容を要約）
+- project_content: 案件内容（文字列、詳細な作業内容）
+- project_notes: 案件備考（文字列、不明なら null）
 - required_languages: 必須言語（配列）[{"name": "Java", "years": 3}]
 - required_frameworks: 必須フレームワーク（配列）[{"name": "Spring Boot", "years": 2}]
 - required_cloud: クラウド環境（配列）[{"name": "AWS", "years": 1}]
+- optional_languages: 尚可言語（配列）[{"name": "Python", "years": 1}]
+- optional_frameworks: 尚可フレームワーク（配列）[{"name": "FastAPI", "years": 1}]
+- optional_cloud: 尚可クラウド（配列）[{"name": "GCP", "years": 1}]
 
 JSONのみを返してください（説明文なし）。`
 
 export async function POST(req: NextRequest) {
-  const { text, type } = await req.json()
-
-  if (!text || !type) {
-    return NextResponse.json({ error: 'textとtypeは必須です' }, { status: 400 })
-  }
-
-  const prompt = type === 'engineer' ? ENGINEER_PROMPT : PROJECT_PROMPT
-
-  const message = await anthropic.messages.create({
-    model: 'claude-opus-4-7',
-    max_tokens: 2048,
-    messages: [
-      {
-        role: 'user',
-        content: `${prompt}\n\n---\n${text}`,
-      },
-    ],
-  })
-
-  const responseText = message.content[0].type === 'text' ? message.content[0].text : ''
-
   try {
+    const { text, type } = await req.json()
+
+    if (!text || !type) {
+      return NextResponse.json({ error: 'textとtypeは必須です' }, { status: 400 })
+    }
+
+    const prompt = type === 'engineer' ? ENGINEER_PROMPT : PROJECT_PROMPT
+
+    const message = await bedrock.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: 2048,
+      messages: [
+        {
+          role: 'user',
+          content: `${prompt}\n\n---\n${text}`,
+        },
+      ],
+    })
+
+    const responseText = message.content[0].type === 'text' ? message.content[0].text : ''
     const jsonMatch = responseText.match(/\{[\s\S]*\}/)
     const result = JSON.parse(jsonMatch?.[0] ?? '{}')
     return NextResponse.json({ result })
-  } catch {
-    return NextResponse.json({ result: {} })
+  } catch (e) {
+    console.error('text-parse error:', e)
+    return NextResponse.json({ error: String(e) }, { status: 500 })
   }
 }

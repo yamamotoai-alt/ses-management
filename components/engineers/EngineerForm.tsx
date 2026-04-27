@@ -34,25 +34,34 @@ function SkillInput({
       <label className="block text-sm font-medium text-slate-700 mb-2">{label}</label>
       <div className="space-y-2">
         {items.map((item, i) => (
-          <div key={i} className="flex gap-2">
+          <div key={i} className="flex gap-2 items-center">
             <select
-              value={item.name}
-              onChange={e => updateItem(i, 'name', e.target.value)}
+              value={options.includes(item.name) ? item.name : 'その他'}
+              onChange={e => updateItem(i, 'name', e.target.value === 'その他' ? 'その他' : e.target.value)}
               className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">選択してください</option>
               {options.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
+            {item.name === 'その他' && (
+              <input
+                type="text"
+                value={item.name === 'その他' ? '' : item.name}
+                onChange={e => updateItem(i, 'name', e.target.value)}
+                placeholder="具体的に入力"
+                className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            )}
             <input
               type="number"
               value={item.years}
               onChange={e => updateItem(i, 'years', Number(e.target.value))}
               min={1}
               max={30}
-              className="w-20 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-16 sm:w-20 border border-slate-300 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="年数"
             />
-            <span className="flex items-center text-sm text-slate-500">年</span>
+            <span className="flex items-center text-sm text-slate-500 whitespace-nowrap">年</span>
             <button type="button" onClick={() => removeItem(i)} className="text-slate-400 hover:text-red-500 transition-colors">
               <X className="w-4 h-4" />
             </button>
@@ -107,7 +116,9 @@ export default function EngineerForm({ engineer }: Props) {
     formData.append('pdf', file)
     try {
       const res = await fetch('/api/pdf-parse', { method: 'POST', body: formData })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
+      if (data.error) throw new Error(data.error)
       if (data.engineer) {
         const eng = data.engineer
         if (eng.name) set('name', eng.name)
@@ -121,8 +132,8 @@ export default function EngineerForm({ engineer }: Props) {
         if (eng.frameworks?.length) setFrameworks(eng.frameworks)
         if (eng.cloud_environments?.length) setCloudEnvs(eng.cloud_environments)
       }
-    } catch {
-      alert('PDFの解析に失敗しました')
+    } catch (e) {
+      alert('PDFの解析に失敗しました: ' + String(e))
     }
     setPdfLoading(false)
   }
@@ -136,7 +147,9 @@ export default function EngineerForm({ engineer }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: pasteText, type: 'engineer' }),
       })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
+      if (data.error) throw new Error(data.error)
       if (data.result) {
         const r = data.result
         if (r.name) set('name', r.name)
@@ -152,8 +165,8 @@ export default function EngineerForm({ engineer }: Props) {
         setPasteText('')
         setShowTextInput(false)
       }
-    } catch {
-      alert('テキストの解析に失敗しました')
+    } catch (e) {
+      alert('テキストの解析に失敗しました: ' + String(e))
     }
     setTextLoading(false)
   }
@@ -247,7 +260,7 @@ export default function EngineerForm({ engineer }: Props) {
       {/* 基本情報 */}
       <section>
         <h3 className="text-base font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">基本情報</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>氏名 <span className="text-red-500">*</span></label>
             <input type="text" required value={form.name} onChange={e => set('name', e.target.value)} className={inputClass} />
@@ -311,7 +324,7 @@ export default function EngineerForm({ engineer }: Props) {
       {/* 営業情報 */}
       <section>
         <h3 className="text-base font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">営業情報</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>上位営業先</label>
             <input type="text" value={form.top_sales_target} onChange={e => set('top_sales_target', e.target.value)} className={inputClass} />

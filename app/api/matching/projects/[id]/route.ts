@@ -1,17 +1,16 @@
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import Anthropic from '@anthropic-ai/sdk'
 import { Engineer, Project } from '@/types'
+import { bedrock, CLAUDE_MODEL } from '@/lib/anthropic'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
-export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = createClient()
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const supabase = await createClient()
 
   const [{ data: project }, { data: engineers }] = await Promise.all([
-    supabase.from('projects').select('*').eq('id', params.id).single(),
+    supabase.from('projects').select('*').eq('id', id).single(),
     supabase.from('engineers').select('*').eq('status', '待機中'),
   ])
 
@@ -63,8 +62,8 @@ ${engineerList.map((e, i) => `
   ]
 }`
 
-  const message = await anthropic.messages.create({
-    model: 'claude-opus-4-7',
+  const message = await bedrock.messages.create({
+    model: CLAUDE_MODEL,
     max_tokens: 2048,
     messages: [{ role: 'user', content: prompt }],
   })
