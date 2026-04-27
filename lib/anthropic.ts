@@ -1,6 +1,6 @@
-import AnthropicBedrock from '@anthropic-ai/bedrock-sdk'
+import { AnthropicBedrockMantle } from '@anthropic-ai/bedrock-sdk'
 
-export const bedrock = new AnthropicBedrock()
+export const bedrock = new AnthropicBedrockMantle()
 
-// AWS BedrockでのモデルID
-export const CLAUDE_MODEL = 'us.anthropic.claude-opus-4-5-20251101-v1:0'
+// AWS Bedrock Mantle API のモデルID
+export const CLAUDE_MODEL = 'claude-opus-4-5-20251101'
