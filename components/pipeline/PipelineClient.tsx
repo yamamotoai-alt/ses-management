@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Proposal, ProposalStatus, PROPOSAL_STATUSES } from '@/types'
-import { LayoutGrid, List, Clock, AlertCircle, ChevronRight, User, Briefcase } from 'lucide-react'
+import { LayoutGrid, List, Clock, AlertCircle, ChevronRight, User, Briefcase, Building2 } from 'lucide-react'
 import Link from 'next/link'
 import AddProposalModal from './AddProposalModal'
 
@@ -27,6 +27,7 @@ function ProposalCard({ proposal, onStatusChange }: { proposal: Proposal; onStat
   const overdue = isOverdue(proposal)
   const eng = proposal.engineers
   const proj = proposal.projects
+  const isPartner = proposal.channel === 'パートナーからの提案'
 
   return (
     <div className={`bg-white rounded-xl border p-3 shadow-sm hover:shadow-md transition-all ${overdue ? 'border-red-300 bg-red-50' : 'border-slate-200'}`}>
@@ -44,6 +45,12 @@ function ProposalCard({ proposal, onStatusChange }: { proposal: Proposal; onStat
               {proj?.name ?? '—'}
             </Link>
           </div>
+          {isPartner && proposal.partner_company_name && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <Building2 className="w-3 h-3 text-purple-400 flex-shrink-0" />
+              <span className="text-xs text-purple-600 truncate">{proposal.partner_company_name}</span>
+            </div>
+          )}
         </div>
         {overdue && <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />}
       </div>
@@ -92,13 +99,22 @@ const STATUS_HEADER_COLORS: Record<string, string> = {
   '終了': 'bg-slate-200 text-slate-700',
 }
 
+type ChannelTab = '社内' | 'パートナーからの提案'
+
 export default function PipelineClient({ initialProposals, byStatus: initialByStatus }: Props) {
   const [proposals, setProposals] = useState(initialProposals)
   const [view, setView] = useState<'kanban' | 'list'>('kanban')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [channelTab, setChannelTab] = useState<ChannelTab>('社内')
+
+  const filtered = proposals.filter(p =>
+    channelTab === 'パートナーからの提案'
+      ? p.channel === 'パートナーからの提案'
+      : p.channel !== 'パートナーからの提案'
+  )
 
   const byStatus = Object.fromEntries(
-    PROPOSAL_STATUSES.map(s => [s, proposals.filter(p => p.status === s)])
+    PROPOSAL_STATUSES.map(s => [s, filtered.filter(p => p.status === s)])
   )
 
   async function handleStatusChange(id: string, status: ProposalStatus) {
@@ -114,10 +130,30 @@ export default function PipelineClient({ initialProposals, byStatus: initialBySt
     setProposals(prev => [proposal, ...prev])
   }
 
-  const overdueCount = proposals.filter(isOverdue).length
+  const overdueCount = filtered.filter(isOverdue).length
+  const partnerCount = proposals.filter(p => p.channel === 'パートナーからの提案').length
 
   return (
     <div>
+      {/* チャネルタブ */}
+      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 mb-6 w-fit">
+        {(['社内', 'パートナーからの提案'] as ChannelTab[]).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setChannelTab(tab)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              channelTab === tab ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {tab === 'パートナーからの提案' && <Building2 className="w-4 h-4" />}
+            {tab}
+            {tab === 'パートナーからの提案' && partnerCount > 0 && (
+              <span className="bg-purple-100 text-purple-700 text-xs font-bold px-1.5 py-0.5 rounded-full">{partnerCount}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         <div className="flex bg-slate-100 rounded-lg p-1 gap-1">
           <button
@@ -133,12 +169,14 @@ export default function PipelineClient({ initialProposals, byStatus: initialBySt
             <List className="w-4 h-4" /> 一覧
           </button>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-        >
-          + 提案追加
-        </button>
+        {channelTab === '社内' && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+          >
+            + 提案追加
+          </button>
+        )}
         {overdueCount > 0 && (
           <div className="flex items-center gap-1.5 px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
             <AlertCircle className="w-4 h-4" />
@@ -172,13 +210,16 @@ export default function PipelineClient({ initialProposals, byStatus: initialBySt
               <tr>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">エンジニア</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">案件</th>
+                {channelTab === 'パートナーからの提案' && (
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">提案企業</th>
+                )}
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">ステータス</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600">次アクション期日</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {proposals.map(p => {
+              {filtered.map(p => {
                 const overdue = isOverdue(p)
                 return (
                   <tr key={p.id} className={`hover:bg-slate-50 ${overdue ? 'bg-red-50' : ''}`}>
@@ -192,6 +233,14 @@ export default function PipelineClient({ initialProposals, byStatus: initialBySt
                         {p.projects?.name ?? '—'}
                       </Link>
                     </td>
+                    {channelTab === 'パートナーからの提案' && (
+                      <td className="px-4 py-3 text-slate-600">
+                        <div className="text-sm">{p.partner_company_name ?? '—'}</div>
+                        {p.partner_contact_name && (
+                          <div className="text-xs text-slate-400">{p.partner_contact_name}</div>
+                        )}
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       <select
                         value={p.status}
@@ -215,8 +264,10 @@ export default function PipelineClient({ initialProposals, byStatus: initialBySt
                   </tr>
                 )
               })}
-              {proposals.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-400">提案データがありません</td></tr>
+              {filtered.length === 0 && (
+                <tr><td colSpan={channelTab === 'パートナーからの提案' ? 6 : 5} className="px-4 py-8 text-center text-sm text-slate-400">
+                  {channelTab === 'パートナーからの提案' ? 'パートナーからの提案はまだありません' : '提案データがありません'}
+                </td></tr>
               )}
             </tbody>
           </table>

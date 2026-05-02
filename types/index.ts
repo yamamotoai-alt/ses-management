@@ -1,5 +1,5 @@
 export type WorkStyle = 'フルリモート' | 'ハイブリッド' | '常駐'
-export type EngineerStatus = '稼働中' | '待機中'
+export type EngineerStatus = '稼働中' | '待機中' | '別企業で稼働'
 export type ProjectStatus = '募集中' | '終了' | 'draft'
 export type ProposalStatus = '提案準備' | '提案中' | '面談調整中' | '面談済' | '結果待ち' | '受注' | '稼働開始' | '終了予定' | '終了'
 export type RenewalDecision = 'pending' | 'will_renew' | 'will_end' | 'decided_unknown'
@@ -13,19 +13,36 @@ export interface Engineer {
   id: string
   name: string
   initials: string | null
+  title: string | null
   age: number | null
   nearest_station: string | null
   monthly_rate: number | null
+  client_rate: number | null
   languages: SkillWithYears[]
   frameworks: SkillWithYears[]
   cloud_environments: SkillWithYears[]
+  db_skills: SkillWithYears[]
+  os_environments: SkillWithYears[]
+  tools: SkillWithYears[]
+  other_skills: SkillWithYears[]
   work_style: WorkStyle | null
   available_from: string | null
   skill_summary: string | null
   status: EngineerStatus
+  email: string | null
+  phone: string | null
+  nationality: string | null
+  desired_project: string | null
+  inflow_source: string | null
+  working_hours: string | null
+  personality: string | null
+  notes: string | null
+  skill_sheet_real_path: string | null
+  skill_sheet_initials_path: string | null
   top_sales_target: string | null
   interview_person: string | null
   sales_person: string | null
+  username: string | null
   created_at: string
   updated_at: string
 }
@@ -36,6 +53,8 @@ export interface Project {
   introducer: string | null
   budget_min: number | null
   budget_max: number | null
+  engineer_price_min: number | null
+  engineer_price_max: number | null
   duration: string | null
   required_languages: SkillWithYears[]
   required_frameworks: SkillWithYears[]
@@ -49,6 +68,8 @@ export interface Project {
   interview_count: string | null
   commercial_flow: string | null
   required_experience_years: number | null
+  required_requirements: string | null
+  preferred_requirements: string | null
   description: string | null
   project_content: string | null
   project_notes: string | null
@@ -64,6 +85,10 @@ export interface Proposal {
   engineer_id: string
   project_id: string
   status: ProposalStatus
+  channel: string
+  partner_company_name: string | null
+  partner_contact_name: string | null
+  partner_contact_email: string | null
   next_action_at: string | null
   next_action_note: string | null
   contract_start_date: string | null
@@ -91,6 +116,21 @@ export interface MonthlyBilling {
   created_at: string
   updated_at: string
   proposals?: Proposal
+}
+
+export type PartnerType = '人員出し' | '案件出し' | '両方'
+
+export interface PartnerCompany {
+  id: string
+  company_name: string
+  contact_person: string | null
+  email: string | null
+  phone: string | null
+  contact_method: string | null
+  partner_type: PartnerType | null
+  notes: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface DistributionChain {

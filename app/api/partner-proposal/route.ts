@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
-    const payload = {
+    // 1. プロジェクトを作成
+    const projectPayload = {
       name: body.name ?? '',
       introducer: body.company_name || null,
       budget_min: body.budget_min ? Math.round(Number(body.budget_min) * 10000) : null,
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
       preferred_requirements: body.preferred_requirements || null,
       description: body.description || null,
       project_content: body.project_content || null,
-      project_notes: [body.project_notes, body.engineer_id ? `対象エンジニアID: ${body.engineer_id}` : null].filter(Boolean).join('\n') || null,
+      project_notes: body.project_notes || null,
       required_languages: [],
       required_frameworks: [],
       required_cloud: [],
@@ -38,8 +39,28 @@ export async function POST(req: NextRequest) {
       source: 'パートナー提案',
     }
 
-    const { error } = await supabase.from('projects').insert(payload)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .insert(projectPayload)
+      .select('id')
+      .single()
+
+    if (projectError) return NextResponse.json({ error: projectError.message }, { status: 500 })
+
+    // 2. 対象エンジニアがいれば提案パイプラインに追加
+    if (body.engineer_id) {
+      const proposalPayload = {
+        engineer_id: body.engineer_id,
+        project_id: project.id,
+        status: '提案準備',
+        channel: 'パートナーからの提案',
+        partner_company_name: body.company_name || null,
+        partner_contact_name: body.contact_name || null,
+        partner_contact_email: body.contact_email || null,
+      }
+      const { error: proposalError } = await supabase.from('proposals').insert(proposalPayload)
+      if (proposalError) return NextResponse.json({ error: proposalError.message }, { status: 500 })
+    }
 
     return NextResponse.json({ ok: true })
   } catch (e) {
