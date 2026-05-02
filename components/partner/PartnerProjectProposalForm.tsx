@@ -1,12 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, CheckCircle } from 'lucide-react'
+import { Loader2, CheckCircle, FileText } from 'lucide-react'
 import { WorkStyle, MONTHS } from '@/types'
 
 export default function PartnerProjectProposalForm({ engineerId }: { engineerId?: string }) {
   const [submitted, setSubmitted] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [pasteText, setPasteText] = useState('')
+  const [textLoading, setTextLoading] = useState(false)
+  const [showTextInput, setShowTextInput] = useState(false)
 
   const [form, setForm] = useState({
     company_name: '',
@@ -29,6 +32,51 @@ export default function PartnerProjectProposalForm({ engineerId }: { engineerId?
   })
 
   const set = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }))
+
+  async function handleTextParse() {
+    if (!pasteText.trim()) return
+    setTextLoading(true)
+    try {
+      const res = await fetch('/api/text-parse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: pasteText, type: 'project' }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      const r = data.result
+      if (r.name) set('name', r.name)
+      if (r.budget_min) set('budget_min', (r.budget_min >= 10000 ? r.budget_min / 10000 : r.budget_min).toString())
+      if (r.budget_max) set('budget_max', (r.budget_max >= 10000 ? r.budget_max / 10000 : r.budget_max).toString())
+      if (r.duration) set('duration', r.duration)
+      if (r.work_style) set('work_style', r.work_style)
+      if (r.work_location) set('work_location', r.work_location)
+      if (r.work_hours) set('work_hours', r.work_hours)
+      if (r.interview_count) set('interview_count', r.interview_count)
+      if (r.required_experience_years) set('required_experience_years', String(r.required_experience_years))
+      if (r.description) set('description', r.description)
+      if (r.project_content) set('project_content', r.project_content)
+      if (r.project_notes) set('project_notes', r.project_notes)
+      const reqs = [
+        ...(r.required_languages ?? []).map((l: {name:string;years:number}) => `${l.name}${l.years ? ` ${l.years}年以上` : ''}`),
+        ...(r.required_frameworks ?? []).map((f: {name:string;years:number}) => `${f.name}${f.years ? ` ${f.years}年以上` : ''}`),
+        ...(r.required_cloud ?? []).map((c: {name:string;years:number}) => `${c.name}${c.years ? ` ${c.years}年以上` : ''}`),
+      ]
+      if (reqs.length) set('required_requirements', reqs.join('\n'))
+      const opts = [
+        ...(r.optional_languages ?? []).map((l: {name:string}) => l.name),
+        ...(r.optional_frameworks ?? []).map((f: {name:string}) => f.name),
+        ...(r.optional_cloud ?? []).map((c: {name:string}) => c.name),
+      ]
+      if (opts.length) set('preferred_requirements', opts.join('\n'))
+      setPasteText('')
+      setShowTextInput(false)
+    } catch (e) {
+      alert('テキストの解析に失敗しました: ' + String(e))
+    }
+    setTextLoading(false)
+  }
 
   const inputClass = "w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
   const labelClass = "block text-sm font-medium text-slate-700 mb-1"
@@ -73,6 +121,41 @@ export default function PartnerProjectProposalForm({ engineerId }: { engineerId?
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* テキスト抽出 */}
+      <div className="bg-blue-50 rounded-2xl border border-blue-200 p-5">
+        <p className="text-sm font-semibold text-blue-800 mb-1 flex items-center gap-2">
+          <FileText className="w-4 h-4" />AIによる自動入力
+        </p>
+        <p className="text-xs text-blue-600 mb-3">案件票・メール文面などを貼り付けると、フォームに自動入力します。</p>
+        <button
+          type="button"
+          onClick={() => setShowTextInput(v => !v)}
+          disabled={textLoading}
+          className="bg-white border border-blue-300 text-blue-700 text-sm px-4 py-2 rounded-xl hover:bg-blue-50 transition-colors flex items-center gap-2"
+        >
+          <FileText className="w-4 h-4" />テキストから入力
+        </button>
+        {showTextInput && (
+          <div className="mt-3 space-y-2">
+            <textarea
+              value={pasteText}
+              onChange={e => setPasteText(e.target.value)}
+              rows={6}
+              className="w-full border border-blue-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              placeholder={"案件票・メール文面などをここに貼り付けてください\n\n例:\n案件名: ECサイトリニューアル開発\n予算: 60〜80万円/月\nフルリモート / 期間3ヶ月〜\n必須: Java 3年以上、Spring Boot経験"}
+            />
+            <button
+              type="button"
+              onClick={handleTextParse}
+              disabled={textLoading || !pasteText.trim()}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors flex items-center gap-2"
+            >
+              {textLoading ? <><Loader2 className="w-4 h-4 animate-spin" />解析中...</> : <>AIで抽出する</>}
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* 会社・担当者情報 */}
       <section className="bg-white rounded-2xl border border-slate-200 p-6">
         <h3 className="text-base font-semibold text-slate-800 mb-5 pb-2 border-b border-slate-100">ご担当者情報</h3>
