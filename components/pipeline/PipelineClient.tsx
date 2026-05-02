@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Proposal, ProposalStatus, PROPOSAL_STATUSES } from '@/types'
-import { LayoutGrid, List, Clock, AlertCircle, ChevronRight, User, Briefcase, Building2 } from 'lucide-react'
+import { LayoutGrid, List, Clock, AlertCircle, ChevronRight, User, Briefcase, Building2, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import AddProposalModal from './AddProposalModal'
 
@@ -80,6 +80,14 @@ function ProposalCard({ proposal, onStatusChange }: { proposal: Proposal; onStat
           {overdue && <span className="font-semibold">({daysDiff(proposal.next_action_at)}日超過)</span>}
         </div>
       )}
+
+      <Link
+        href={`/pipeline/${proposal.id}`}
+        className="mt-2 mb-1 flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 hover:underline"
+        onClick={e => e.stopPropagation()}
+      >
+        <ExternalLink className="w-2.5 h-2.5" />詳細を見る
+      </Link>
 
       <select
         value={proposal.status}
@@ -255,7 +263,9 @@ export default function PipelineClient({ initialProposals }: Props) {
                       ) : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                      <Link href={`/pipeline/${p.id}`} className="inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 hover:underline">
+                        詳細 <ChevronRight className="w-3 h-3" />
+                      </Link>
                     </td>
                   </tr>
                 )
