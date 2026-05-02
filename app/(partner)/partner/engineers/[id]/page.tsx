@@ -28,30 +28,39 @@ export default async function PartnerEngineerDetailPage({ params }: { params: Pr
         <Link href="/partner/engineers" className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-3">
           <ChevronLeft className="w-4 h-4" /> エンジニア一覧に戻る
         </Link>
-        <div className="flex flex-wrap items-center gap-2 mb-1">
-          <h2 className="text-xl md:text-2xl font-bold text-slate-800">{displayName}</h2>
-          <Badge variant="orange">待機中</Badge>
-          {engineer.work_style && <Badge variant="blue">{engineer.work_style}</Badge>}
-        </div>
-        {engineer.title && (
-          <p className="text-base text-slate-600 font-medium mb-1">{engineer.title}</p>
-        )}
-        <div className="flex flex-wrap gap-4 text-sm text-slate-500 mt-2">
-          {rate && (
-            <span>{formatRate(rate)}</span>
-          )}
-          {engineer.available_from && (
-            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{engineer.available_from}〜稼働可能</span>
-          )}
-          {engineer.age && (
-            <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" />{engineer.age}歳</span>
-          )}
-          {engineer.nearest_station && (
-            <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{engineer.nearest_station}</span>
-          )}
-          {engineer.nationality && (
-            <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" />{engineer.nationality}</span>
-          )}
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <h2 className="text-xl md:text-2xl font-bold text-slate-800">{displayName}</h2>
+              <Badge variant="orange">待機中</Badge>
+              {engineer.work_style && <Badge variant="blue">{engineer.work_style}</Badge>}
+            </div>
+            {engineer.title && (
+              <p className="text-base text-slate-600 font-medium mb-1">{engineer.title}</p>
+            )}
+            <div className="flex flex-wrap gap-4 text-sm text-slate-500 mt-2">
+              {rate && <span>{formatRate(rate)}</span>}
+              {engineer.available_from && (
+                <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{engineer.available_from}〜稼働可能</span>
+              )}
+              {engineer.age && (
+                <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" />{engineer.age}歳</span>
+              )}
+              {engineer.nearest_station && (
+                <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{engineer.nearest_station}</span>
+              )}
+              {engineer.nationality && (
+                <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" />{engineer.nationality}</span>
+              )}
+            </div>
+          </div>
+          <Link
+            href={`/partner/propose?for=${engineer.id}`}
+            className="flex-shrink-0 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-sm"
+          >
+            <Send className="w-4 h-4" />
+            案件を提案する
+          </Link>
         </div>
       </div>
 
@@ -171,18 +180,6 @@ export default async function PartnerEngineerDetailPage({ params }: { params: Pr
           </div>
         )}
 
-        <div className="bg-blue-50 rounded-xl border border-blue-200 p-5">
-          <p className="text-sm text-blue-800 mb-4">
-            このエンジニアへのご紹介案件がございましたら、下記フォームよりご提案ください。
-          </p>
-          <Link
-            href={`/partner/propose?for=${engineer.id}`}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
-          >
-            <Send className="w-4 h-4" />
-            このエンジニアに案件を提案する
-          </Link>
-        </div>
       </div>
     </div>
   )
