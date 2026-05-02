@@ -196,51 +196,49 @@ export default async function PartnerEngineersPage({ searchParams }: Props) {
             return (
               <div
                 key={eng.id}
-                className="bg-white rounded-xl border border-slate-200 hover:shadow-md hover:border-blue-200 transition-all group"
+                className="bg-white rounded-xl border border-slate-200 hover:shadow-md hover:border-blue-200 transition-all group relative"
               >
-                <Link href={`/partner/engineers/${eng.id}`} className="block p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      {/* 名前・バッジ */}
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h3 className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors text-base">
-                          {eng.initials || '—'}
-                        </h3>
-                        {eng.work_style && <Badge variant="blue">{eng.work_style}</Badge>}
-                        {eng.available_from && (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                            <Calendar className="w-3 h-3" />{eng.available_from}〜参画可
-                          </span>
-                        )}
-                      </div>
-                      {/* タイトル */}
-                      {eng.title && (
-                        <p className="text-sm text-slate-600 font-medium mb-2">{eng.title}</p>
-                      )}
-                      {/* メタ情報 */}
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
-                        {rate && <span className="font-semibold text-slate-700">{formatRate(rate)}</span>}
-                        {eng.age && <span>{eng.age}歳</span>}
-                        {eng.nearest_station && (
-                          <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{eng.nearest_station}</span>
-                        )}
-                        {eng.working_hours && <span>{eng.working_hours}</span>}
-                      </div>
-                      {/* スキルバッジ */}
-                      <SkillBadges engineer={eng} keyword={sp.skill} />
-                      {/* 希望案件 */}
-                      {eng.desired_project && (
-                        <p className="mt-2 text-xs text-slate-400 truncate">希望: {eng.desired_project}</p>
+                {/* カード全体リンク */}
+                <Link href={`/partner/engineers/${eng.id}`} className="block p-5 pb-3">
+                  <div className="flex-1 min-w-0">
+                    {/* 名前・バッジ */}
+                    <div className="flex items-center gap-2 mb-1 flex-wrap pr-32">
+                      <h3 className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors text-base">
+                        {eng.initials || '—'}
+                      </h3>
+                      {eng.work_style && <Badge variant="blue">{eng.work_style}</Badge>}
+                      {eng.available_from && (
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                          <Calendar className="w-3 h-3" />{eng.available_from}〜参画可
+                        </span>
                       )}
                     </div>
+                    {/* タイトル */}
+                    {eng.title && (
+                      <p className="text-sm text-slate-600 font-medium mb-2">{eng.title}</p>
+                    )}
+                    {/* メタ情報 */}
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+                      {rate && <span className="font-semibold text-slate-700">{formatRate(rate)}</span>}
+                      {eng.age && <span>{eng.age}歳</span>}
+                      {eng.nearest_station && (
+                        <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{eng.nearest_station}</span>
+                      )}
+                      {eng.working_hours && <span>{eng.working_hours}</span>}
+                    </div>
+                    {/* スキルバッジ */}
+                    <SkillBadges engineer={eng} keyword={sp.skill} />
+                    {/* 希望案件 */}
+                    {eng.desired_project && (
+                      <p className="mt-2 text-xs text-slate-400 truncate">希望: {eng.desired_project}</p>
+                    )}
                   </div>
                 </Link>
-                {/* 提案ボタン */}
-                <div className="px-5 pb-4">
+                {/* 提案ボタン（absolute で重ねて独立したリンクにする） */}
+                <div className="px-5 pb-4 flex justify-end">
                   <Link
                     href={`/partner/propose?for=${eng.id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 border border-blue-200 hover:border-blue-400 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
-                    onClick={e => e.stopPropagation()}
+                    className="relative z-10 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 border border-blue-200 hover:border-blue-400 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
                   >
                     <Send className="w-3 h-3" />案件を提案する
                   </Link>
