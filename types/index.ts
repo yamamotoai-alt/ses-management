@@ -39,10 +39,12 @@ export interface Engineer {
   notes: string | null
   skill_sheet_real_path: string | null
   skill_sheet_initials_path: string | null
+  resume_real_path: string | null
   top_sales_target: string | null
   interview_person: string | null
   sales_person: string | null
   username: string | null
+  interviewed: boolean
   created_at: string
   updated_at: string
 }
@@ -53,6 +55,7 @@ export interface Project {
   introducer: string | null
   budget_min: number | null
   budget_max: number | null
+  budget_skill_based: boolean
   engineer_price_min: number | null
   engineer_price_max: number | null
   duration: string | null
