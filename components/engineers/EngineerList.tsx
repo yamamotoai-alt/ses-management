@@ -1,11 +1,13 @@
 'use client'
 
 import { Engineer } from '@/types'
+import { type Role } from '@/lib/role'
+import { formatRate } from '@/lib/format'
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge'
-import { User, MapPin, DollarSign, Calendar } from 'lucide-react'
+import { User, MapPin, Calendar } from 'lucide-react'
 
-export default function EngineerList({ engineers }: { engineers: Engineer[] }) {
+export default function EngineerList({ engineers, role = 'admin' }: { engineers: Engineer[]; role?: Role }) {
   if (engineers.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
@@ -20,7 +22,9 @@ export default function EngineerList({ engineers }: { engineers: Engineer[] }) {
 
   return (
     <div className="grid gap-4">
-      {engineers.map(eng => (
+      {engineers.map(eng => {
+        const displayName = role === 'partner' && eng.initials ? eng.initials : eng.name
+        return (
         <Link
           key={eng.id}
           href={`/engineers/${eng.id}`}
@@ -30,9 +34,9 @@ export default function EngineerList({ engineers }: { engineers: Engineer[] }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
                 <h3 className="font-semibold text-slate-800 group-hover:text-blue-600 transition-colors">
-                  {eng.name}
+                  {displayName}
                 </h3>
-                <Badge variant={eng.status === '稼働中' ? 'green' : 'orange'}>
+                <Badge variant={eng.status === '稼働中' ? 'green' : eng.status === '別企業で稼働' ? 'blue' : 'orange'}>
                   {eng.status}
                 </Badge>
                 {eng.work_style && (
@@ -41,17 +45,17 @@ export default function EngineerList({ engineers }: { engineers: Engineer[] }) {
               </div>
 
               <div className="flex flex-wrap gap-4 text-sm text-slate-500">
-                {eng.nearest_station && (
+                {eng.nearest_station && role !== 'partner' && (
                   <span className="flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5" />
                     {eng.nearest_station}
                   </span>
                 )}
                 {eng.monthly_rate && (
-                  <span className="flex items-center gap-1">
-                    <DollarSign className="w-3.5 h-3.5" />
-                    {eng.monthly_rate.toLocaleString()}円/月
-                  </span>
+                  <span>希望 {formatRate(eng.monthly_rate)}</span>
+                )}
+                {eng.client_rate && role !== 'partner' && (
+                  <span className="text-blue-600 font-medium">企業出し {formatRate(eng.client_rate)}</span>
                 )}
                 {eng.available_from && (
                   <span className="flex items-center gap-1">
@@ -65,7 +69,7 @@ export default function EngineerList({ engineers }: { engineers: Engineer[] }) {
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {eng.languages.slice(0, 5).map(l => (
                     <span key={l.name} className="px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded">
-                      {l.name}({l.years}年)
+                      {l.name}
                     </span>
                   ))}
                   {eng.languages.length > 5 && (
@@ -76,7 +80,8 @@ export default function EngineerList({ engineers }: { engineers: Engineer[] }) {
             </div>
           </div>
         </Link>
-      ))}
+        )
+      })}
     </div>
   )
 }

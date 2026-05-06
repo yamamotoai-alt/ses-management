@@ -91,7 +91,7 @@ export default async function PartnerEngineersPage({ searchParams }: Props) {
 
   let query = supabase
     .from('engineers')
-    .select('id, initials, title, age, nearest_station, monthly_rate, client_rate, work_style, available_from, languages, frameworks, cloud_environments, db_skills, os_environments, tools, other_skills, skill_summary, working_hours, desired_project, status')
+    .select('id, initials, title, age, nearest_station, monthly_rate, client_rate, work_style, available_from, languages, frameworks, cloud_environments, db_skills, os_environments, tools, other_skills, skill_summary, working_hours, desired_project, status, employment_type')
     .eq('status', '待機中')
     .order(col, { ascending: asc, nullsFirst: false })
 
@@ -120,23 +120,23 @@ export default async function PartnerEngineersPage({ searchParams }: Props) {
 
       {/* 検索・フィルター */}
       <form className="bg-white rounded-xl border border-slate-200 p-4 mb-6 space-y-3">
-        <div className="flex flex-wrap gap-3">
-          {/* スキル検索 */}
-          <div className="flex-1 min-w-[180px] relative">
-            <Zap className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
-            <input
-              type="text"
-              name="skill"
-              defaultValue={sp.skill}
-              placeholder="スキルで検索（Java, AWS, React...）"
-              className="w-full border border-blue-200 bg-blue-50 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white placeholder:text-blue-300"
-            />
-          </div>
+        {/* スキル検索 */}
+        <div className="relative">
+          <Zap className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-400" />
+          <input
+            type="text"
+            name="skill"
+            defaultValue={sp.skill}
+            placeholder="スキルで検索（Java, AWS, React...）"
+            className="w-full border border-blue-200 bg-blue-50 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white placeholder:text-blue-300"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
           {/* 稼働形態 */}
           <select
             name="work_style"
             defaultValue={sp.work_style}
-            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">稼働形態: 全て</option>
             <option value="フルリモート">フルリモート</option>
@@ -147,7 +147,7 @@ export default async function PartnerEngineersPage({ searchParams }: Props) {
           <select
             name="available_from"
             defaultValue={sp.available_from}
-            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">参画時期: 全て</option>
             {AVAILABLE_OPTIONS.map(o => (
@@ -158,7 +158,7 @@ export default async function PartnerEngineersPage({ searchParams }: Props) {
           <select
             name="sort"
             defaultValue={sp.sort}
-            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full col-span-2 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {SORT_OPTIONS.map(o => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -166,7 +166,7 @@ export default async function PartnerEngineersPage({ searchParams }: Props) {
           </select>
         </div>
         <div className="flex items-center gap-3">
-          <button type="submit" className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors flex items-center gap-2">
+          <button type="submit" className="flex-1 sm:flex-none bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
             <Search className="w-3.5 h-3.5" />検索
           </button>
           {isFiltered && (
@@ -174,12 +174,12 @@ export default async function PartnerEngineersPage({ searchParams }: Props) {
               クリア
             </Link>
           )}
-          {sp.skill && (
-            <p className="text-xs text-blue-600">
-              「<strong>{sp.skill}</strong>」のスキルを持つエンジニア: {engineers.length}名
-            </p>
-          )}
         </div>
+        {sp.skill && (
+          <p className="text-xs text-blue-600">
+            「<strong>{sp.skill}</strong>」のスキルを持つエンジニア: {engineers.length}名
+          </p>
+        )}
       </form>
 
       {engineers.length === 0 ? (
@@ -199,14 +199,19 @@ export default async function PartnerEngineersPage({ searchParams }: Props) {
                 className="bg-white rounded-xl border border-slate-200 hover:shadow-md hover:border-blue-200 transition-all group relative"
               >
                 {/* カード全体リンク */}
-                <Link href={`/partner/engineers/${eng.id}`} className="block p-5 pb-3">
-                  <div className="flex-1 min-w-0">
+                <Link href={`/partner/engineers/${eng.id}`} className="block p-4 pb-3">
+                  <div className="min-w-0">
                     {/* 名前・バッジ */}
-                    <div className="flex items-center gap-2 mb-1 flex-wrap pr-32">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <h3 className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors text-base">
                         {eng.initials || '—'}
                       </h3>
                       {eng.work_style && <Badge variant="blue">{eng.work_style}</Badge>}
+                      {eng.employment_type && (
+                        <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 rounded">
+                          {eng.employment_type}
+                        </span>
+                      )}
                       {eng.available_from && (
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                           <Calendar className="w-3 h-3" />{eng.available_from}〜参画可
@@ -215,10 +220,10 @@ export default async function PartnerEngineersPage({ searchParams }: Props) {
                     </div>
                     {/* タイトル */}
                     {eng.title && (
-                      <p className="text-sm text-slate-600 font-medium mb-2">{eng.title}</p>
+                      <p className="text-sm text-slate-600 font-medium mb-2 leading-snug">{eng.title}</p>
                     )}
                     {/* メタ情報 */}
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-500">
                       {rate && <span className="font-semibold text-slate-700">{formatRate(rate)}</span>}
                       {eng.age && <span>{eng.age}歳</span>}
                       {eng.nearest_station && (
@@ -230,12 +235,12 @@ export default async function PartnerEngineersPage({ searchParams }: Props) {
                     <SkillBadges engineer={eng} keyword={sp.skill} />
                     {/* 希望案件 */}
                     {eng.desired_project && (
-                      <p className="mt-2 text-xs text-slate-400 truncate">希望: {eng.desired_project}</p>
+                      <p className="mt-2 text-xs text-slate-400 line-clamp-1">希望: {eng.desired_project}</p>
                     )}
                   </div>
                 </Link>
-                {/* 提案ボタン（absolute で重ねて独立したリンクにする） */}
-                <div className="px-5 pb-4 flex justify-end">
+                {/* 提案ボタン */}
+                <div className="px-4 pb-4 flex justify-end">
                   <Link
                     href={`/partner/propose?for=${eng.id}`}
                     className="relative z-10 inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 border border-blue-200 hover:border-blue-400 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"

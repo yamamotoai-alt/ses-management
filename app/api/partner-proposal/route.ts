@@ -62,6 +62,29 @@ export async function POST(req: NextRequest) {
       if (proposalError) return NextResponse.json({ error: proposalError.message }, { status: 500 })
     }
 
+    // LINE通知
+    try {
+      const token = process.env.LINE_CHANNEL_ACCESS_TOKEN
+      const groupId = process.env.LINE_GROUP_ID
+      if (token && groupId) {
+        const engineerInfo = body.engineer_id ? `対象エンジニアあり` : 'エンジニア未指定'
+        const budget = body.budget_min || body.budget_max
+          ? `${body.budget_min ?? '?'}〜${body.budget_max ?? '?'}万円`
+          : '未設定'
+        const text = `🤝 パートナー企業から案件提案\n提案元: ${body.company_name || '不明'}\n担当者: ${body.contact_name || '不明'}\n案件名: ${body.name || '不明'}\n予算: ${budget}\n稼働: ${body.work_style || '未設定'}\n${engineerInfo}`
+        await fetch('https://api.line.me/v2/bot/message/push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ to: groupId, messages: [{ type: 'text', text }] }),
+        })
+      }
+    } catch {
+      // LINE通知失敗は無視して続行
+    }
+
     return NextResponse.json({ ok: true })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })

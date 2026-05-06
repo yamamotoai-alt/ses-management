@@ -45,6 +45,7 @@ export interface Engineer {
   sales_person: string | null
   username: string | null
   interviewed: boolean
+  employment_type: '弊社業務委託社員' | '弊社正社員' | '一社先社員' | null
   created_at: string
   updated_at: string
 }

@@ -9,7 +9,7 @@ import { Engineer } from '@/types'
 import { getRole } from '@/lib/role'
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string; work_style?: string; sort?: string }>
+  searchParams: Promise<{ q?: string; status?: string; work_style?: string; sort?: string; tab?: string }>
 }
 
 const ENGINEER_SORT_OPTIONS = [
@@ -29,6 +29,8 @@ export default async function EngineersPage({ searchParams }: Props) {
   const supabase = await createClient()
   const role = await getRole()
 
+  const tab = sp.tab === 'interviewed' ? 'interviewed' : 'pre'
+
   const sort = sp.sort ?? 'created_desc'
   const sortMap: Record<string, { col: string; asc: boolean; nullsFirst?: boolean }> = {
     created_desc: { col: 'created_at', asc: false },
@@ -43,7 +45,9 @@ export default async function EngineersPage({ searchParams }: Props) {
   }
   const { col, asc, nullsFirst } = sortMap[sort] ?? sortMap.created_desc
 
-  let query = supabase.from('engineers').select('*').order(col, { ascending: asc, nullsFirst: nullsFirst ?? true })
+  let query = supabase.from('engineers').select('*')
+    .eq('interviewed', tab === 'interviewed')
+    .order(col, { ascending: asc, nullsFirst: nullsFirst ?? true })
 
   if (sp.status) query = query.eq('status', sp.status)
   if (sp.work_style) query = query.eq('work_style', sp.work_style)
@@ -51,12 +55,25 @@ export default async function EngineersPage({ searchParams }: Props) {
 
   const { data: engineers } = await query
 
+  // タブカウント用
+  const { count: preCount } = await supabase.from('engineers').select('*', { count: 'exact', head: true }).eq('interviewed', false)
+  const { count: interviewedCount } = await supabase.from('engineers').select('*', { count: 'exact', head: true }).eq('interviewed', true)
+
+  const tabBase = (t: string) => {
+    const params = new URLSearchParams({ tab: t })
+    if (sp.q) params.set('q', sp.q)
+    if (sp.status) params.set('status', sp.status)
+    if (sp.work_style) params.set('work_style', sp.work_style)
+    if (sp.sort) params.set('sort', sp.sort)
+    return `/engineers?${params.toString()}`
+  }
+
   return (
     <div className="p-4 md:p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-slate-800">エンジニア管理</h2>
-          <p className="text-slate-500 text-sm mt-1">{engineers?.length ?? 0}名のエンジニア</p>
+          <p className="text-slate-500 text-sm mt-1">{engineers?.length ?? 0}名</p>
         </div>
         <div className="flex items-center gap-2">
           <ExportEngineersButton engineers={(engineers ?? []) as Engineer[]} />
@@ -69,8 +86,27 @@ export default async function EngineersPage({ searchParams }: Props) {
         </div>
       </div>
 
+      {/* タブ */}
+      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 mb-6 w-fit">
+        <Link
+          href={tabBase('pre')}
+          className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${tab === 'pre' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          事前面談前
+          <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${tab === 'pre' ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-500'}`}>{preCount ?? 0}</span>
+        </Link>
+        <Link
+          href={tabBase('interviewed')}
+          className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${tab === 'interviewed' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        >
+          事前面談後
+          <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${tab === 'interviewed' ? 'bg-green-100 text-green-700' : 'bg-slate-200 text-slate-500'}`}>{interviewedCount ?? 0}</span>
+        </Link>
+      </div>
+
       {/* 検索・フィルター */}
       <form className="bg-white rounded-xl border border-slate-200 p-4 mb-6 flex flex-wrap gap-3">
+        <input type="hidden" name="tab" value={tab} />
         <div className="flex-1 min-w-0 relative">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -113,7 +149,7 @@ export default async function EngineersPage({ searchParams }: Props) {
         <button type="submit" className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors">
           検索
         </button>
-        <Link href="/engineers" className="text-sm text-slate-500 hover:text-slate-700 px-3 py-2 flex items-center">
+        <Link href={`/engineers?tab=${tab}`} className="text-sm text-slate-500 hover:text-slate-700 px-3 py-2 flex items-center">
           クリア
         </Link>
       </form>

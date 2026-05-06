@@ -85,6 +85,7 @@ export default function EngineerForm({ engineer, role = 'admin' }: Props) {
     working_hours: engineer?.working_hours ?? '',
     personality: engineer?.personality ?? '',
     notes: engineer?.notes ?? '',
+    employment_type: engineer?.employment_type ?? '',
     top_sales_target: engineer?.top_sales_target ?? '',
     interview_person: engineer?.interview_person ?? '',
     sales_person: engineer?.sales_person ?? '',
@@ -214,6 +215,7 @@ export default function EngineerForm({ engineer, role = 'admin' }: Props) {
       working_hours: form.working_hours || null,
       personality: form.personality || null,
       notes: form.notes || null,
+      employment_type: form.employment_type || null,
       top_sales_target: form.top_sales_target || null,
       interview_person: form.interview_person || null,
       sales_person: form.sales_person || null,
@@ -434,6 +436,15 @@ export default function EngineerForm({ engineer, role = 'admin' }: Props) {
       <section>
         <h3 className="text-base font-semibold text-slate-800 mb-4 pb-2 border-b border-slate-200">営業情報</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>所属ステータス</label>
+            <select value={form.employment_type} onChange={e => set('employment_type', e.target.value)} className={inputClass}>
+              <option value="">未設定</option>
+              <option value="弊社業務委託社員">弊社業務委託社員</option>
+              <option value="弊社正社員">弊社正社員</option>
+              <option value="一社先社員">一社先社員</option>
+            </select>
+          </div>
           <div>
             <label className={labelClass}>上位営業先</label>
             <input type="text" value={form.top_sales_target} onChange={e => set('top_sales_target', e.target.value)} className={inputClass} />

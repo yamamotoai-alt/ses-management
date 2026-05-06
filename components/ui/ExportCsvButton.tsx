@@ -19,7 +19,7 @@ function skillsToString(skills: { name: string; years: number }[]): string {
 export function ExportEngineersButton({ engineers }: { engineers: Engineer[] }) {
   function handleExport() {
     const headers = [
-      '氏名', 'イニシャル', '年齢', '最寄り駅/地域', '単価(円/月)', 'ステータス', '稼働形態',
+      '氏名', 'イニシャル', '年齢', '最寄り駅/地域', '単価(万円/月)', 'ステータス', '稼働形態',
       '参画タイミング', '言語スキル', 'フレームワーク', 'クラウド環境',
       'スキル概要', '上位営業先', '面接担当者', '営業担当者', '登録日',
     ]
@@ -63,7 +63,7 @@ export function ExportEngineersButton({ engineers }: { engineers: Engineer[] }) 
 export function ExportProjectsButton({ projects }: { projects: Project[] }) {
   function handleExport() {
     const headers = [
-      '案件名', '紹介者', '予算下限(円/月)', '予算上限(円/月)', '期間',
+      '案件名', '紹介者', '予算下限(万円/月)', '予算上限(万円/月)', '期間',
       '稼働形態', '必要経験年数(年以上)', '必須言語', '必須フレームワーク',
       'クラウド環境', '案件概要', 'ステータス', '登録日',
     ]

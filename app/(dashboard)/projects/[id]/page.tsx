@@ -5,12 +5,16 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Badge from '@/components/ui/Badge'
 import MatchingSection from '@/components/matching/MatchingSection'
-import { ChevronLeft, Edit, DollarSign, Clock, Users, MapPin, Timer, MessageSquare, GitBranch } from 'lucide-react'
+import ProjectDetailActions from '@/components/projects/ProjectDetailActions'
+import { ChevronLeft, Clock, Users, MapPin, Timer, MessageSquare, GitBranch } from 'lucide-react'
 import { Project } from '@/types'
+import { getRole } from '@/lib/role'
+import { formatRateRange } from '@/lib/format'
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
+  const role = await getRole()
   const { data } = await supabase.from('projects').select('*').eq('id', id).single()
   if (!data) notFound()
   const project = data as Project
@@ -29,11 +33,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {project.work_style && <Badge variant="blue">{project.work_style}</Badge>}
             </div>
             <div className="flex flex-wrap gap-3 text-sm text-slate-500 mt-2">
-              {(project.budget_min || project.budget_max) && (
-                <span className="flex items-center gap-1">
-                  <DollarSign className="w-3.5 h-3.5" />
-                  {project.budget_min?.toLocaleString() ?? '?'}〜{project.budget_max?.toLocaleString() ?? '?'}円/月
-                </span>
+              <span>
+                予算 {project.budget_skill_based ? 'スキル見合い' : (project.budget_min || project.budget_max) ? formatRateRange(project.budget_min, project.budget_max) : '未設定'}
+              </span>
+              {(project.engineer_price_min || project.engineer_price_max) && (
+                <span>提示 {formatRateRange(project.engineer_price_min, project.engineer_price_max)}</span>
               )}
               {project.duration && <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{project.duration}</span>}
               {project.required_experience_years && (
@@ -53,110 +57,30 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               )}
             </div>
           </div>
-          <Link
-            href={`/projects/${project.id}/edit`}
-            className="flex items-center gap-2 border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors flex-shrink-0"
-          >
-            <Edit className="w-4 h-4" /> 編集
-          </Link>
+          {role !== 'partner' && <ProjectDetailActions project={project} role={role} />}
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          {/* 必須スキル */}
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <h3 className="font-semibold text-slate-700 mb-4">必須スキル</h3>
-            {project.required_languages.length > 0 && (
-              <div className="mb-4">
-                <p className="text-xs font-medium text-slate-500 mb-2">必須言語</p>
-                <div className="flex flex-wrap gap-2">
-                  {project.required_languages.map(l => (
-                    <span key={l.name} className="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-lg">
-                      {l.name} <span className="text-blue-400">{l.years}年+</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {project.required_frameworks.length > 0 && (
-              <div className="mb-4">
-                <p className="text-xs font-medium text-slate-500 mb-2">必須フレームワーク</p>
-                <div className="flex flex-wrap gap-2">
-                  {project.required_frameworks.map(f => (
-                    <span key={f.name} className="px-3 py-1 bg-purple-50 text-purple-700 text-sm rounded-lg">
-                      {f.name} <span className="text-purple-400">{f.years}年+</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {project.required_cloud.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-slate-500 mb-2">クラウド環境</p>
-                <div className="flex flex-wrap gap-2">
-                  {project.required_cloud.map(c => (
-                    <span key={c.name} className="px-3 py-1 bg-orange-50 text-orange-700 text-sm rounded-lg">
-                      {c.name} <span className="text-orange-400">{c.years}年+</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {project.required_languages.length === 0 && project.required_frameworks.length === 0 && project.required_cloud.length === 0 && (
-              <p className="text-sm text-slate-400">必須スキルが設定されていません</p>
-            )}
-          </div>
-
-          {/* 尚可スキル */}
-          {((project.optional_languages?.length ?? 0) > 0 || (project.optional_frameworks?.length ?? 0) > 0 || (project.optional_cloud?.length ?? 0) > 0) && (
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="font-semibold text-slate-700 mb-4">尚可スキル</h3>
-              {(project.optional_languages?.length ?? 0) > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs font-medium text-slate-500 mb-2">尚可言語</p>
-                  <div className="flex flex-wrap gap-2">
-                    {project.optional_languages.map(l => (
-                      <span key={l.name} className="px-3 py-1 bg-blue-50/60 text-blue-600 text-sm rounded-lg border border-blue-100">
-                        {l.name} <span className="text-blue-400">{l.years}年+</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {(project.optional_frameworks?.length ?? 0) > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs font-medium text-slate-500 mb-2">尚可フレームワーク</p>
-                  <div className="flex flex-wrap gap-2">
-                    {project.optional_frameworks.map(f => (
-                      <span key={f.name} className="px-3 py-1 bg-purple-50/60 text-purple-600 text-sm rounded-lg border border-purple-100">
-                        {f.name} <span className="text-purple-400">{f.years}年+</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {(project.optional_cloud?.length ?? 0) > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-slate-500 mb-2">尚可クラウド</p>
-                  <div className="flex flex-wrap gap-2">
-                    {project.optional_cloud.map(c => (
-                      <span key={c.name} className="px-3 py-1 bg-orange-50/60 text-orange-600 text-sm rounded-lg border border-orange-100">
-                        {c.name} <span className="text-orange-400">{c.years}年+</span>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* 案件詳細 */}
-          {(project.description || project.project_content || project.project_notes) && (
+          {(project.required_requirements || project.preferred_requirements || project.description || project.project_content || project.project_notes) && (
             <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-4">
               <h3 className="font-semibold text-slate-700">案件詳細</h3>
-              {project.description && (
+              {project.required_requirements && (
                 <div>
+                  <p className="text-xs font-medium text-slate-500 mb-2">必須要件</p>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{project.required_requirements}</p>
+                </div>
+              )}
+              {project.preferred_requirements && (
+                <div className="pt-3 border-t border-slate-100">
+                  <p className="text-xs font-medium text-slate-500 mb-2">歓迎要件</p>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{project.preferred_requirements}</p>
+                </div>
+              )}
+              {project.description && (
+                <div className="pt-3 border-t border-slate-100">
                   <p className="text-xs font-medium text-slate-500 mb-2">案件概要</p>
                   <p className="text-sm text-slate-700 whitespace-pre-wrap">{project.description}</p>
                 </div>
@@ -181,23 +105,34 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <h3 className="font-semibold text-slate-700 mb-4">その他情報</h3>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               {[
-                { label: '紹介者名', value: project.introducer },
-                { label: '商流', value: project.commercial_flow },
-                { label: '面談回数', value: project.interview_count },
-                { label: '勤務場所', value: project.work_location },
-                { label: '勤務時間', value: project.work_hours },
-              ].map(({ label, value }) => (
-                <div key={label}>
-                  <dt className="text-slate-500 text-xs font-medium mb-0.5">{label}</dt>
-                  <dd className="text-slate-800 font-medium">{value || '—'}</dd>
-                </div>
-              ))}
+                { label: '紹介者名', value: project.introducer, internal: true },
+                { label: '商流', value: project.commercial_flow, internal: true },
+                { label: '面談回数', value: project.interview_count, internal: false },
+                { label: '勤務場所', value: project.work_location, internal: false },
+                { label: '勤務時間', value: project.work_hours, internal: false },
+                {
+                  label: 'エンジニア提示金額',
+                  internal: true,
+                  value: (project.engineer_price_min || project.engineer_price_max)
+                    ? formatRateRange(project.engineer_price_min, project.engineer_price_max)
+                    : null,
+                },
+              ]
+                .filter(item => role !== 'partner' || !item.internal)
+                .map(({ label, value }) => (
+                  <div key={label}>
+                    <dt className="text-slate-500 text-xs font-medium mb-0.5">{label}</dt>
+                    <dd className="text-slate-800 font-medium">{value || '—'}</dd>
+                  </div>
+                ))}
             </dl>
           </div>
+
+          {/* 編集・削除（admin・salesのみ） */}
         </div>
 
         <div className="lg:col-span-1">
-          <MatchingSection type="project" id={project.id} />
+          {role !== 'partner' && <MatchingSection type="project" id={project.id} />}
         </div>
       </div>
     </div>

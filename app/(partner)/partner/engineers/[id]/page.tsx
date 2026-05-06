@@ -13,7 +13,7 @@ export default async function PartnerEngineerDetailPage({ params }: { params: Pr
   const supabase = await createClient()
   const { data } = await supabase
     .from('engineers')
-    .select('id, initials, title, age, nearest_station, monthly_rate, client_rate, work_style, available_from, languages, frameworks, cloud_environments, db_skills, os_environments, tools, other_skills, skill_summary, working_hours, nationality, desired_project, notes, status')
+    .select('id, initials, title, age, nearest_station, monthly_rate, client_rate, work_style, available_from, languages, frameworks, cloud_environments, db_skills, os_environments, tools, other_skills, skill_summary, working_hours, nationality, desired_project, notes, status, employment_type')
     .eq('id', id)
     .single()
 
@@ -34,6 +34,11 @@ export default async function PartnerEngineerDetailPage({ params }: { params: Pr
               <h2 className="text-xl md:text-2xl font-bold text-slate-800">{displayName}</h2>
               <Badge variant="orange">待機中</Badge>
               {engineer.work_style && <Badge variant="blue">{engineer.work_style}</Badge>}
+              {engineer.employment_type && (
+                <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 rounded-full">
+                  {engineer.employment_type}
+                </span>
+              )}
             </div>
             {engineer.title && (
               <p className="text-base text-slate-600 font-medium mb-1">{engineer.title}</p>

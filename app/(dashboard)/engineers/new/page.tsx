@@ -1,8 +1,12 @@
+export const runtime = 'edge'
+
 import EngineerForm from '@/components/engineers/EngineerForm'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
+import { getRole } from '@/lib/role'
 
-export default function NewEngineerPage() {
+export default async function NewEngineerPage() {
+  const role = await getRole()
   return (
     <div className="p-4 md:p-8">
       <div className="mb-6">
@@ -11,7 +15,7 @@ export default function NewEngineerPage() {
         </Link>
         <h2 className="text-xl md:text-2xl font-bold text-slate-800">エンジニア新規登録</h2>
       </div>
-      <EngineerForm />
+      <EngineerForm role={role} />
     </div>
   )
 }

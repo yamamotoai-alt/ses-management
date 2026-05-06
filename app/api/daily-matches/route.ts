@@ -39,7 +39,7 @@ export async function POST(_req: NextRequest) {
   const prompt = `以下の待機中エンジニアと募集中案件の全組み合わせをスコアリングしてください。
 
 ## エンジニア一覧
-${engList.map((e, i) => `[E${i+1}] ID:${e.id} 名前:${e.name} スキル:${e.languages.map(l=>l.name).join(',')} 単価:${e.monthly_rate??'不明'} 稼働:${e.work_style??'不明'}`).join('\n')}
+${engList.map((e, i) => `[E${i+1}] ID:${e.id} 名前:${e.name} 言語:${e.languages.map(l=>l.name).join(',')||'なし'} FW:${e.frameworks.map(f=>f.name).join(',')||'なし'} クラウド:${e.cloud_environments.map(c=>c.name).join(',')||'なし'} DB:${e.db_skills.map(d=>d.name).join(',')||'なし'} ツール:${e.tools.map(t=>t.name).join(',')||'なし'} 単価:${e.monthly_rate??'不明'} 稼働:${e.work_style??'不明'}`).join('\n')}
 
 ## 案件一覧
 ${projList.map((p, i) => `[P${i+1}] ID:${p.id} 名前:${p.name} 必須:${p.required_languages.map(l=>l.name).join(',')} 予算:${p.budget_max??'不明'} 稼働:${p.work_style??'不明'}`).join('\n')}

@@ -219,10 +219,21 @@ export default function IntakeForm() {
     return (
       <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center max-w-lg mx-auto">
         <CheckCircle className="w-14 h-14 text-green-500 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-slate-800 mb-2">ご回答ありがとうございます！</h2>
-        <p className="text-slate-500 text-sm">
-          内容を確認の上、担当者よりご連絡いたします。<br />
-          しばらくお待ちください。
+        <h2 className="text-xl font-bold text-slate-800 mb-2">ご登録ありがとうございます！</h2>
+        <p className="text-slate-600 text-sm mb-6">
+          続いて、担当者との面談日程をご調整ください。<br />
+          下記のURLより、ご都合のよい日時をお選びいただけます。
+        </p>
+        <a
+          href="https://timerex.net/s/nexusadvisors/8a95879a"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-6 py-3 rounded-xl transition-colors shadow-sm"
+        >
+          面談の日程を調整する →
+        </a>
+        <p className="mt-4 text-xs text-slate-400">
+          日程調整が完了次第、担当者よりご連絡いたします。
         </p>
       </div>
     )
@@ -231,11 +242,11 @@ export default function IntakeForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* 書類アップロード（必須） */}
-      <section className="bg-blue-50 rounded-2xl border border-blue-200 p-6">
-        <h3 className="text-sm font-semibold text-blue-800 mb-1">
-          履歴書・職務経歴書 {req}
+      <section className={`rounded-2xl border-2 p-6 ${file ? 'bg-blue-50 border-blue-300' : 'bg-red-50 border-red-300'}`}>
+        <h3 className="text-sm font-semibold text-slate-800 mb-1 flex items-center gap-2">
+          履歴書・職務経歴書 <span className="text-red-500 font-bold">※必須</span>
         </h3>
-        <p className="text-xs text-blue-600 mb-4">PDFをアップロードすると、情報を自動入力します。</p>
+        <p className="text-xs text-slate-500 mb-4">PDFをアップロードすると、情報を自動入力します。提出がない場合は登録できません。</p>
 
         {file ? (
           <div className="flex items-center gap-3 bg-white border border-blue-200 rounded-xl px-4 py-3">
@@ -252,14 +263,14 @@ export default function IntakeForm() {
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex items-center gap-2 bg-white border border-blue-300 text-blue-700 text-sm px-4 py-2.5 rounded-xl hover:bg-blue-50 transition-colors"
+            className="flex items-center gap-2 bg-white border-2 border-red-300 text-red-700 text-sm px-4 py-2.5 rounded-xl hover:bg-red-50 transition-colors font-medium"
           >
             <Upload className="w-4 h-4" />
-            ファイルを選択
+            ファイルを選択（必須）
           </button>
         )}
         <input ref={fileRef} type="file" className="hidden" accept=".pdf,.docx,.doc,.xlsx,.xls" onChange={handleFileChange} />
-        <p className="mt-2 text-xs text-blue-500">対応形式: PDF, Word, Excel</p>
+        <p className="mt-2 text-xs text-slate-400">対応形式: PDF, Word, Excel</p>
       </section>
 
       {pdfLoading && (

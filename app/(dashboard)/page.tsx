@@ -1,6 +1,8 @@
 export const runtime = 'edge'
 
 import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { getRole } from '@/lib/role'
 import Link from 'next/link'
 import { Users, Briefcase, UserCheck, AlertCircle, Clock, TrendingUp, Sparkles, Calendar } from 'lucide-react'
 import { Proposal } from '@/types'
@@ -16,6 +18,9 @@ function daysFromNow(days: number): string {
 }
 
 export default async function DashboardPage() {
+  const role = await getRole()
+  if (role === 'sales') redirect('/engineers')
+
   const supabase = await createClient()
 
   const today = new Date().toISOString().slice(0, 10)

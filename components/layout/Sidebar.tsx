@@ -2,24 +2,34 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Users, Briefcase, LogOut, LayoutDashboard, X, GitBranch, Receipt } from 'lucide-react'
+import { Users, Briefcase, LogOut, LayoutDashboard, X, GitBranch, Receipt, Building2, BarChart2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { clsx } from 'clsx'
+import { type Role } from '@/lib/role'
 
-const navItems = [
-  { href: '/', label: 'ダッシュボード', icon: LayoutDashboard },
-  { href: '/engineers', label: 'エンジニア管理', icon: Users },
-  { href: '/projects', label: '案件管理', icon: Briefcase },
-  { href: '/pipeline', label: '提案パイプライン', icon: GitBranch },
-  { href: '/billing', label: '請求管理', icon: Receipt },
+const ALL_NAV_ITEMS = [
+  { href: '/',          label: 'ダッシュボード',   icon: LayoutDashboard, roles: ['admin'] },
+  { href: '/engineers', label: 'エンジニア管理',   icon: Users,           roles: ['admin', 'sales', 'partner'] },
+  { href: '/projects',  label: '案件管理',         icon: Briefcase,       roles: ['admin', 'sales', 'partner'] },
+  { href: '/pipeline',  label: '提案パイプライン', icon: GitBranch,       roles: ['admin', 'sales'] },
+  { href: '/billing',   label: '請求管理',         icon: Receipt,         roles: ['admin'] },
+  { href: '/partners',  label: '協業企業管理',     icon: Building2,       roles: ['admin'] },
+  { href: '/kpi',       label: 'KPIダッシュボード',icon: BarChart2,       roles: ['admin'] },
 ]
+
+const ROLE_LABELS: Record<Role, string> = {
+  admin:   '管理者',
+  sales:   '営業',
+  partner: '協力企業',
+}
 
 interface Props {
   isOpen: boolean
   onClose: () => void
+  role: Role
 }
 
-export default function Sidebar({ isOpen, onClose }: Props) {
+export default function Sidebar({ isOpen, onClose, role }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -29,6 +39,8 @@ export default function Sidebar({ isOpen, onClose }: Props) {
     router.push('/login')
     router.refresh()
   }
+
+  const navItems = ALL_NAV_ITEMS.filter(item => item.roles.includes(role))
 
   return (
     <aside
@@ -42,7 +54,7 @@ export default function Sidebar({ isOpen, onClose }: Props) {
       <div className="px-6 py-5 border-b border-slate-700 flex items-center justify-between">
         <div>
           <h1 className="text-white font-bold text-lg leading-tight">SES管理ツール</h1>
-          <p className="text-slate-400 text-xs mt-0.5">エンジニア・案件管理</p>
+          <p className="text-slate-400 text-xs mt-0.5">{ROLE_LABELS[role]}</p>
         </div>
         <button
           onClick={onClose}

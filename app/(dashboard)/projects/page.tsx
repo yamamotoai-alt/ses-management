@@ -2,20 +2,43 @@ export const runtime = 'edge'
 
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { Search, DollarSign, Clock } from 'lucide-react'
+import { Search, DollarSign, Clock, CalendarPlus, Building2 } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
 import { Project } from '@/types'
 import ProjectListHeader from '@/components/projects/ProjectListHeader'
+import { formatRateRange } from '@/lib/format'
 
 interface Props {
-  searchParams: Promise<{ q?: string; status?: string; work_style?: string }>
+  searchParams: Promise<{ q?: string; status?: string; work_style?: string; sort?: string }>
 }
+
+const PROJECT_SORT_OPTIONS = [
+  { value: 'created_desc', label: '追加順（新しい順）' },
+  { value: 'created_asc',  label: '追加順（古い順）' },
+  { value: 'updated_desc', label: '更新順（新しい順）' },
+  { value: 'updated_asc',  label: '更新順（古い順）' },
+  { value: 'budget_desc',  label: '予算順（高い順）' },
+  { value: 'budget_asc',   label: '予算順（低い順）' },
+  { value: 'name_asc',     label: '案件名順（昇順）' },
+]
 
 export default async function ProjectsPage({ searchParams }: Props) {
   const sp = await searchParams
   const supabase = await createClient()
 
-  let query = supabase.from('projects').select('*').order('created_at', { ascending: false })
+  const sort = sp.sort ?? 'created_desc'
+  const sortMap: Record<string, { col: string; asc: boolean; nullsFirst?: boolean }> = {
+    created_desc: { col: 'created_at', asc: false },
+    created_asc:  { col: 'created_at', asc: true },
+    updated_desc: { col: 'updated_at', asc: false },
+    updated_asc:  { col: 'updated_at', asc: true },
+    budget_desc:  { col: 'budget_max', asc: false, nullsFirst: false },
+    budget_asc:   { col: 'budget_min', asc: true, nullsFirst: false },
+    name_asc:     { col: 'name', asc: true },
+  }
+  const { col, asc, nullsFirst } = sortMap[sort] ?? sortMap.created_desc
+
+  let query = supabase.from('projects').select('*').order(col, { ascending: asc, nullsFirst: nullsFirst ?? true })
 
   if (sp.status) query = query.eq('status', sp.status)
   if (sp.work_style) query = query.eq('work_style', sp.work_style)
@@ -50,6 +73,11 @@ export default async function ProjectsPage({ searchParams }: Props) {
           <option value="ハイブリッド">ハイブリッド</option>
           <option value="常駐">常駐</option>
         </select>
+        <select name="sort" defaultValue={sp.sort} className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          {PROJECT_SORT_OPTIONS.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
         <button type="submit" className="bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors">検索</button>
         <Link href="/projects" className="text-sm text-slate-500 hover:text-slate-700 px-3 py-2 flex items-center">クリア</Link>
       </form>
@@ -78,10 +106,9 @@ export default async function ProjectsPage({ searchParams }: Props) {
                     {proj.work_style && <Badge variant="blue">{proj.work_style}</Badge>}
                   </div>
                   <div className="flex flex-wrap gap-4 text-sm text-slate-500">
-                    {(proj.budget_min || proj.budget_max) && (
+                    {(proj.budget_skill_based || proj.budget_min || proj.budget_max) && (
                       <span className="flex items-center gap-1">
-                        <DollarSign className="w-3.5 h-3.5" />
-                        {proj.budget_min?.toLocaleString() ?? '?'}〜{proj.budget_max?.toLocaleString() ?? '?'}円/月
+                        {proj.budget_skill_based ? 'スキル見合い' : formatRateRange(proj.budget_min, proj.budget_max)}
                       </span>
                     )}
                     {proj.duration && (
@@ -92,6 +119,15 @@ export default async function ProjectsPage({ searchParams }: Props) {
                     {proj.required_experience_years && (
                       <span>{proj.required_experience_years}年以上の経験</span>
                     )}
+                    {proj.introducer && (
+                      <span className="flex items-center gap-1">
+                        <Building2 className="w-3.5 h-3.5" />{proj.introducer}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <CalendarPlus className="w-3.5 h-3.5" />
+                      {new Date(proj.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </span>
                   </div>
                   {(proj.required_languages ?? []).length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1.5">
